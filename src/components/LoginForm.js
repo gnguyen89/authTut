@@ -1,7 +1,16 @@
 import React, { Component } from 'react';
-// import { TextInput } from 'react-native';
+import { Text } from 'react-native';
+import firebase from 'firebase';
 
-import { Card, CardSection, Button, Input } from './common';
+import { Card, CardSection, Button, Input, Spinner } from './common';
+
+const styles = {
+  errorTextStyle: {
+    fontSize: 20,
+    alignSelf: 'center',
+    color: 'red',
+  },
+};
 
 export default class LoginForm extends Component {
   constructor() {
@@ -10,9 +19,45 @@ export default class LoginForm extends Component {
     this.state = {
       email: '',
       password: '',
+      error: '',
+      loading: false,
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.onButtonPress = this.onButtonPress.bind(this);
+    this.onLoginSuccess = this.onLoginSuccess.bind(this);
+    this.onLoginFail = this.onLoginFail.bind(this);
+  }
+
+  onButtonPress() {
+    const { email, password } = this.state;
+    this.setState({ loading: true, error: '' }); // reset error message
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(this.onLoginSuccess)
+      .catch(() => {
+        firebase.auth().createUserWithEmailAndPassword(email, password)
+          .then(this.onLoginSuccess)
+          .catch(this.onLoginFail);
+      });
+  }
+
+  onLoginFail() {
+    this.setState({
+      email: '',
+      password: '',
+      error: 'Authentication failed.',
+      loading: false,
+    });
+  }
+
+  onLoginSuccess() {
+    this.setState({
+      email: '',
+      password: '',
+      error: '',
+      loading: false,
+    });
   }
 
   handleInputChange(value, name) {
@@ -20,7 +65,7 @@ export default class LoginForm extends Component {
   }
 
   render() {
-    const { email, password } = this.state;
+    const { email, password, error, loading } = this.state;
 
     return (
       <Card>
@@ -32,6 +77,7 @@ export default class LoginForm extends Component {
             onChangeText={value => this.handleInputChange(value, 'email')}
           />
         </CardSection>
+
         <CardSection>
           <Input
             label="Password"
@@ -41,8 +87,14 @@ export default class LoginForm extends Component {
             passwordInput
           />
         </CardSection>
+
+        <Text style={styles.errorTextStyle}>{error}</Text>
+
         <CardSection>
-          <Button>Log in</Button>
+          {loading
+            ? <Spinner size="small" />
+            : <Button onPress={this.onButtonPress}>Log in</Button>
+          }
         </CardSection>
       </Card>
     );

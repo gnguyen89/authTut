@@ -35,6 +35,7 @@ export default function Input({ label, placeholder, value, onChangeText, passwor
         onChangeText={onChangeText}
         autoCorrect={false}
         secureTextEntry={passwordInput}
+        autoCapitalize="none"
       />
     </View>
   );
